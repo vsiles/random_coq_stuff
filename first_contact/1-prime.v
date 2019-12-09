@@ -152,12 +152,42 @@ intros m; induction n as [ | n hi]; simpl in *; intros hlt hle.
       now apply hi.
 Qed.
 
-(* I'm going to need to prove that forall n, prime n \/ ~ prime n
-   so, without the excluded middle, I need a computational way to
-   test if a natural number is prime or not.
-   First let's do the "simple" version in classical logic
-*)
+(* all prime factors of n! + 1 are > n *)
+Lemma prime_div_factor: forall n p, p `div (factorial n + 1) -> prime p -> n < p.
+Proof.
+intros n p hdiv0 hp.
+destruct (lt_dec n p) as [ h | h]; [assumption | ].
+assert (hdiv1: p `div factorial n).
+- apply divides_fact.
+  + destruct p as [ | p].
+    * destruct hp as [_ hp].
+      now destruct (hp 2 (divides0 2)).
+    * now auto with arith.
+  + now apply not_lt in h.
+- assert (h1: p `div 1) by now apply divides_addl with (factorial n).
+  apply divides1 in h1.
+  elim one_not_prime. 
+  now rewrite <- h1.
+Qed.
+
+(* for any natural number, there exists a natural number greater than it *)
+Lemma euclid_: (forall n, n <> 1 -> exists p, prime p /\ p `div n)
+    -> forall n, exists p, n < p /\ prime p.
+Proof.
+intros hprime_factor n.
+destruct (hprime_factor (factorial n + 1)) as [p [hp hd]].
+- rewrite plus_comm; intro hf; injection hf; clear hf; intro hf.
+  now apply factorial_non_zero in hf.
+- exists p; split; [ | assumption ]. 
+  now apply prime_div_factor.
+Qed.
+
+(* Let's prove the "prime_factor" part with the excluded middle, so
+   we can reason "naturally" by contradiction
+ *)
 Require Import Wf.
+
+Section WithEM.
 
 Lemma prime_factor_with_EM: 
     (forall A: Prop, A \/ ~ A) -> 
@@ -193,6 +223,22 @@ destruct (EM (prime n)) as [hp | hp].
          exists x; repeat split; [ now intuition | | assumption ].
          now apply divides_le in hx as [hx | hx]; [ intuition | subst; now elim hn0].
 Qed.
+
+(* for any natural number, there exists a natural number greater than it *)
+Lemma euclid_with_EM: (forall A: Prop, A \/ ~A) ->
+    forall n, exists p, n < p /\ prime p.
+Proof.
+intros hem n.
+apply euclid_.
+now apply prime_factor_with_EM.
+Qed.
+
+End WithEM.
+
+(* Now let's be good intuitionistic lads and do the same without the excluded
+   middle. In `prime_factor_with_EM`, we used the EM to test if a natural
+   number was prime or not. Let's write some code just to do that.
+*)
 
 Section NoEM.
 (*
@@ -453,35 +499,12 @@ case_eq (primen n); intro hp.
       now apply divides_trans with q.
 Qed.
 
-End NoEM.
-
-(* Now that we have `prime_factor` we can easily finish the proof *)
-
-(* all prime factors of n! + 1 are > n *)
-Lemma prime_div_factor: forall n p, p `div (factorial n + 1) -> prime p -> n < p.
-Proof.
-intros n p hdiv0 hp.
-destruct (lt_dec n p) as [ h | h]; [assumption | ].
-assert (hdiv1: p `div factorial n).
-- apply divides_fact.
-  + destruct p as [ | p].
-    * destruct hp as [_ hp].
-      now destruct (hp 2 (divides0 2)).
-    * now auto with arith.
-  + now apply not_lt in h.
-- assert (h1: p `div 1) by now apply divides_addl with (factorial n).
-  apply divides1 in h1.
-  elim one_not_prime. 
-  now rewrite <- h1.
-Qed.
-
 (* for any natural number, there exists a natural number greater than it *)
 Lemma euclid: forall n, exists p, n < p /\ prime p.
 Proof.
 intros n.
-destruct (prime_factor (factorial n + 1)) as [p [hp hd]].
-- rewrite plus_comm; intro hf; injection hf; clear hf; intro hf.
-  now apply factorial_non_zero in hf.
-- exists p; split; [ | assumption ]. 
-  now apply prime_div_factor.
+apply euclid_.
+now apply prime_factor.
 Qed.
+
+End NoEM.
