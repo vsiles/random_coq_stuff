@@ -65,6 +65,10 @@ Fail reflexivity.
 auto with arith.
 Qed.
 
+Print plus.
+
+Print Init.Nat.add. 
+
 (* This is only syntactic sugar for inductive type with single constructor *)
 Record some_struct := mk_some_struct {
     x: nat;
@@ -74,6 +78,7 @@ Record some_struct := mk_some_struct {
 Check x.
 Check y.
 Check mk_some_struct.
+Print mk_some_struct.
 
 (* Chapte 3: inductive types *)
 Inductive same_struct :=
@@ -98,6 +103,10 @@ Inductive myList A :=
  | NIL : myList A
  | CONS : A -> myList A -> myList A
 .
+
+Check myList_ind.
+Check NIL.
+Check CONS.
 
 Fixpoint myLength A (l: myList A) :=
     match l with

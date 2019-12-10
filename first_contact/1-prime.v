@@ -69,6 +69,7 @@ intros d a b [q hq] [p hp].
 exists (q + p).
 rewrite hq, hp.
 SearchAbout mult.
+SearchPattern (_ + _ = _ + _).
 rewrite Nat.mul_add_distr_l.
 reflexivity.
 Qed.
@@ -136,8 +137,11 @@ Qed.
 Lemma divides_fact:forall m n, 0 < m -> m <= n -> 
   m `div (factorial n).
 Proof.
+Show Proof.
 intros m; induction n as [ | n hi]; simpl in *; intros hlt hle.
+Show Proof.
 - apply le_n_0_eq in hle; subst.
+  Show Proof.
   apply lt_irrefl in hlt.
   elim hlt.
 - apply le_lt_eq in hle as [h | h].
@@ -151,6 +155,8 @@ intros m; induction n as [ | n hi]; simpl in *; intros hlt hle.
     * apply divides_lmul.
       now apply hi.
 Qed.
+
+Print divides_fact.
 
 (* all prime factors of n! + 1 are > n *)
 Lemma prime_div_factor: forall n p, p `div (factorial n + 1) -> prime p -> n < p.
